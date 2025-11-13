@@ -4,171 +4,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      html, body {
-        width: 100%;
-        height: 100%;
-      }
-      
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-      }
-      
-      #app {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+      *{margin:0;padding:0;box-sizing:border-box}
+      html,body{width:100%;height:100%}
+      body{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;font-family:Arial, sans-serif}
+      #app{width:100%;display:flex;justify-content:center;align-items:center}
     </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
-    <script src="https://unpkg.com/vue-konva@3/dist/vue-konva.umd.js"></script>
+    <div id="container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/konva@10.0.8/konva.min.js"></script>
     <script>
-      const { createApp, reactive } = Vue;
-      
-      const app = createApp({
-        template: `
-          <div style="width: 100%; display: flex; justify-content: center; align-items: center;">
-            <v-stage :config="stageConfig">
-              <v-layer>
-                <!-- 绿色圆形目标区域 -->
-                <v-circle :config="circleTarget" />
-                
-                <!-- 蓝色矩形目标区域 -->
-                <v-rect :config="rectTarget" />
-                
-                <!-- 红色可拖动圆形 -->
-                <v-circle 
-                  :config="draggableCircle"
-                  @dragstart="onDragStart"
-                  @dragmove="onDragMove"
-                  @dragend="onDragEnd"
-                  draggable
-                />
-              </v-layer>
-            </v-stage>
-          </div>
-        `,
-        setup() {
-          // 计算响应式Canvas尺寸
-          const getStageSize = () => {
-            const width = Math.min(window.innerWidth - 40, 900);
-            return {
-              width: width,
-              height: 500
-            };
-          };
-          
-          const stageSize = getStageSize();
-          
-          const stageConfig = reactive({
-            width: stageSize.width,
-            height: stageSize.height
-          });
-          
-          const draggableCircle = reactive({
-            x: 60,
-            y: 60,
-            radius: 25,
-            fill: 'red',
-            stroke: 'black',
-            strokeWidth: 2
-          });
-          
-          const circleTarget = reactive({
-            x: stageSize.width - 120,
-            y: 80,
-            radius: 50,
-            fill: '#90EE90',
-            stroke: '#4CAF50',
-            strokeWidth: 3,
-            opacity: 0.6
-          });
-          
-          const rectTarget = reactive({
-            x: stageSize.width - 220,
-            y: 320,
-            width: 180,
-            height: 100,
-            fill: '#ADD8E6',
-            stroke: '#2196F3',
-            strokeWidth: 3,
-            opacity: 0.6
-          });
-          
-          const isInCircleTarget = () => {
-            const dx = draggableCircle.x - circleTarget.x;
-            const dy = draggableCircle.y - circleTarget.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance + draggableCircle.radius <= circleTarget.radius;
-          };
-          
-          const isInRectTarget = () => {
-            return (
-              draggableCircle.x - draggableCircle.radius >= rectTarget.x &&
-              draggableCircle.x + draggableCircle.radius <= rectTarget.x + rectTarget.width &&
-              draggableCircle.y - draggableCircle.radius >= rectTarget.y &&
-              draggableCircle.y + draggableCircle.radius <= rectTarget.y + rectTarget.height
-            );
-          };
-          
-          const onDragStart = () => {
-            console.log('开始拖动');
-          };
-          
-          const onDragMove = (e) => {
-            draggableCircle.x = e.target.x();
-            draggableCircle.y = e.target.y();
-          };
-          
-          const onDragEnd = () => {
-            console.log('拖动结束，位置:', draggableCircle.x, draggableCircle.y);
-            
-            if (isInCircleTarget()) {
-              console.log('进入圆形区域');
-              draggableCircle.x = circleTarget.x;
-              draggableCircle.y = circleTarget.y;
-              draggableCircle.fill = '#4CAF50';
-            } else if (isInRectTarget()) {
-              console.log('进入矩形区域');
-              draggableCircle.x = rectTarget.x + rectTarget.width / 2;
-              draggableCircle.y = rectTarget.y + rectTarget.height / 2;
-              draggableCircle.fill = '#2196F3';
-            } else {
-              console.log('未进入任何区域');
-              draggableCircle.fill = 'red';
-            }
-          };
-          
-          return {
-            stageConfig,
-            draggableCircle,
-            circleTarget,
-            rectTarget,
-            onDragStart,
-            onDragMove,
-            onDragEnd
-          };
-        }
-      });
-      
-      app.use(window['vue-konva'].default);
-      app.mount('#app');
+      (()=>{
+        const C={maxW:900,pad:40,h:500,cOff:120,cY:80,cR:50,rectOff:220,rectY:320,rectW:180,rectH:100,dr:{x:60,y:60,r:25}};
+        const w=()=>Math.min(window.innerWidth-C.pad,C.maxW);
+        let stage,layer,circle,rect,dr;
+        const clamp=()=>{const r=dr.radius();dr.x(Math.max(r,Math.min(dr.x(),stage.width()-r)));dr.y(Math.max(r,Math.min(dr.y(),stage.height()-r)))};
+        const inCircle=()=>{const dx=dr.x()-circle.x(),dy=dr.y()-circle.y(),d=Math.hypot(dx,dy);return d+dr.radius()<=circle.radius()};
+        const inRect=()=>{const x=dr.x(),y=dr.y(),r=dr.radius(),rx=rect.x(),ry=rect.y(),rw=rect.width(),rh=rect.height();return x-r>=rx&&x+r<=rx+rw&&y-r>=ry&&y+r<=ry+rh};
+        const debounce=(f,ms=120)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms)}};
+        const init=()=>{
+          stage=new Konva.Stage({container:'container',width:w(),height:C.h});layer=new Konva.Layer();stage.add(layer);
+          circle=new Konva.Circle({x:w()-C.cOff,y:C.cY,radius:C.cR,fill:'#90EE90',stroke:'#4CAF50',strokeWidth:3,opacity:0.6});layer.add(circle);
+          rect=new Konva.Rect({x:w()-C.rectOff,y:C.rectY,width:C.rectW,height:C.rectH,fill:'#ADD8E6',stroke:'#2196F3',strokeWidth:3,opacity:0.6});layer.add(rect);
+          dr=new Konva.Circle({x:C.dr.x,y:C.dr.y,radius:C.dr.r,fill:'red',stroke:'black',strokeWidth:2,draggable:true});
+          dr.dragBoundFunc(function(p){const r=this.radius();return{x:Math.max(r,Math.min(p.x,stage.width()-r)),y:Math.max(r,Math.min(p.y,stage.height()-r))}});
+          dr.on('dragend',()=>{if(inCircle())dr.to({x:circle.x(),y:circle.y(),fill:'#4CAF50',duration:0.18});else if(inRect())dr.to({x:rect.x()+rect.width()/2,y:rect.y()+rect.height()/2,fill:'#2196F3',duration:0.18});else{dr.fill('red');layer.batchDraw()}setTimeout(()=>{clamp();layer.batchDraw()},200)});
+          layer.add(dr);layer.draw();window.addEventListener('resize',debounce(()=>{stage.width(w());circle.x(w()-C.cOff);rect.x(w()-C.rectOff);clamp();layer.batchDraw()}));
+        };
+        window.addEventListener('DOMContentLoaded',init);
+      })();
     </script>
   </body>
 </html>
