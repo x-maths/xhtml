@@ -3,12 +3,75 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html, body {
+        width: 100%;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+      
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      
+      #app {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      canvas {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        display: block;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
+        
+        canvas {
+          max-width: 90vw;
+          max-height: 90vh;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app">
-      <v-stage ref="stage" :config="configKonva">
+      <v-stage ref="stageRef" :config="configKonva">
         <v-layer ref="layer">
-          <v-circle :config="configCircle" />
+          <!-- 圆形目标区域 -->
+          <v-circle :config="targetCircle" />
+          
+          <!-- 矩形目标区域 -->
+          <v-rect :config="targetRect" />
+          
+          <!-- 可拖动的圆形 -->
+          <v-circle 
+            :config="circleState"
+            @dragstart="handleDragStart"
+            @dragmove="handleDragMove"
+            @dragend="handleDragEnd"
+            draggable
+          />
         </v-layer>
       </v-stage>
     </div>
@@ -16,28 +79,104 @@
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script src="https://unpkg.com/vue-konva@3/dist/vue-konva.umd.js"></script>
     <script>
-      const { createApp, ref } = Vue;
+      const { createApp, reactive } = Vue;
       const VueKonva = window['vue-konva'].default;
       
       const app = createApp({
         setup() {
-          const configKonva = {
-            width: 200,
-            height: 200
-          };
+          const configKonva = reactive({
+            width: 900,
+            height: 600
+          });
           
-          const configCircle = {
+          const circleState = reactive({
             x: 100,
             y: 100,
-            radius: 70,
+            radius: 30,
             fill: 'red',
             stroke: 'black',
-            strokeWidth: 4
+            strokeWidth: 2
+          });
+          
+          // 圆形目标区域
+          const targetCircle = reactive({
+            x: 750,
+            y: 120,
+            radius: 50,
+            fill: '#90EE90',
+            stroke: '#4CAF50',
+            strokeWidth: 2,
+            opacity: 0.7
+          });
+          
+          // 矩形目标区域
+          const targetRect = reactive({
+            x: 680,
+            y: 430,
+            width: 150,
+            height: 100,
+            fill: '#ADD8E6',
+            stroke: '#2196F3',
+            strokeWidth: 2,
+            opacity: 0.7
+          });
+          
+          // 检测圆形是否在圆形目标区域内
+          const isCircleInCircleTarget = () => {
+            const dx = circleState.x - targetCircle.x;
+            const dy = circleState.y - targetCircle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance + circleState.radius <= targetCircle.radius;
+          };
+          
+          // 检测圆形是否在矩形目标区域内
+          const isCircleInRectTarget = () => {
+            return (
+              circleState.x - circleState.radius >= targetRect.x &&
+              circleState.x + circleState.radius <= targetRect.x + targetRect.width &&
+              circleState.y - circleState.radius >= targetRect.y &&
+              circleState.y + circleState.radius <= targetRect.y + targetRect.height
+            );
+          };
+          
+          // 处理拖动开始
+          const handleDragStart = () => {
+          };
+          
+          // 处理拖动
+          const handleDragMove = (e) => {
+            circleState.x = e.target.x();
+            circleState.y = e.target.y();
+          };
+          
+          // 处理拖动结束
+          const handleDragEnd = () => {
+            // 检测是否在圆形目标区域内
+            if (isCircleInCircleTarget()) {
+              circleState.x = targetCircle.x;
+              circleState.y = targetCircle.y;
+              circleState.fill = '#4CAF50';
+            } 
+            // 检测是否在矩形目标区域内
+            else if (isCircleInRectTarget()) {
+              circleState.x = targetRect.x + targetRect.width / 2;
+              circleState.y = targetRect.y + targetRect.height / 2;
+              circleState.fill = '#2196F3';
+            }
+            // 都不在，回到红色
+            else {
+              circleState.fill = 'red';
+            }
           };
           
           return {
             configKonva,
-            configCircle
+            circleState,
+            targetCircle,
+            targetRect,
+            handleDragStart,
+            handleDragMove,
+            handleDragEnd
           };
         }
       });
