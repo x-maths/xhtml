@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加载提示测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+        button {
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 P5.js 加载提示测试</h1>
+    
+    <div class="demo-card">
+        <h2>✨ 新功能说明</h2>
+        <p>现在动画加载完成后会自动隐藏"加载中"提示,提升用户体验!</p>
+        
+        <div class="info">
+            <strong>实现原理:</strong>
+            <ol>
+                <li>给每个加载提示添加唯一ID: <code>loading-${containerId}</code></li>
+                <li>在p5实例创建后,使用 <code>setTimeout</code> 延迟50ms</li>
+                <li>隐藏加载提示元素: <code>display: none</code></li>
+                <li>调整容器布局,让canvas正常显示</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="demo-card">
+        <h2>🧪 测试步骤</h2>
+        <ol>
+            <li>点击下方按钮打开测试页面</li>
+            <li>观察动画容器的"⏳ 加载动画中..."提示</li>
+            <li>动画加载完成后,提示应该自动消失</li>
+            <li>canvas应该正常显示在容器中</li>
+        </ol>
+        
+        <button onclick="window.open('template.html?config=config-with-p5-enhanced.json', '_blank')">
+            🚀 打开测试页面 (内联代码)
+        </button>
+        
+        <button onclick="window.open('template.html?config=config-external-sketch.json', '_blank')">
+            🚀 打开测试页面 (外部URL)
+        </button>
+    </div>
+
+    <div class="demo-card">
+        <h2>📝 代码变更</h2>
+        
+        <h3>1. renderP5() 函数</h3>
+        <p>给加载提示添加唯一ID:</p>
+        <pre style="background: #263238; color: #aed581; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+&lt;div id="loading-${p5Config.containerId}" class="text-sm" ...&gt;
+    ⏳ 加载动画中...
+&lt;/div&gt;</pre>
+
+        <h3>2. initializeSingleP5Sketch() 函数</h3>
+        <p>在p5实例创建后隐藏加载提示:</p>
+        <pre style="background: #263238; color: #aed581; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+// 隐藏加载提示
+const loadingElement = document.getElementById(`loading-${containerId}`);
+
+const p5Instance = new p5((p) => {
+    sketchFunc(p, containerId, sketch.params || {});
+    
+    // 在setup完成后隐藏加载提示
+    setTimeout(() => {
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+        // 移除容器的flex布局
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.style.display = 'block';
+            container.style.alignItems = '';
+            container.style.justifyContent = '';
+        }
+    }, 50);
+});</pre>
+    </div>
+
+    <div class="demo-card">
+        <h2>🎯 预期效果</h2>
+        <ul>
+            <li>✅ 页面加载时显示"⏳ 加载动画中..."</li>
+            <li>✅ 动画初始化完成后(约50-150ms)提示消失</li>
+            <li>✅ canvas平滑显示,无闪烁</li>
+            <li>✅ 容器布局自动调整</li>
+            <li>✅ 多个动画互不干扰</li>
+        </ul>
+    </div>
+
+    <div class="demo-card">
+        <h2>🔍 调试技巧</h2>
+        <p>打开浏览器控制台,可以看到:</p>
+        <ul>
+            <li>📝 从配置代码创建 sketch "remainderSketch"</li>
+            <li>✅ P5 sketch "remainderSketch" 初始化成功</li>
+        </ul>
+        
+        <p>检查DOM元素:</p>
+        <pre style="background: #263238; color: #aed581; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+// 查看加载提示是否隐藏
+document.getElementById('loading-remainder-demo')
+// 应该返回元素,但 style.display === 'none'
+
+// 查看容器
+document.getElementById('remainder-demo')
+// 应该包含 canvas 元素</pre>
+    </div>
+
+    <script>
+        console.log('📍 加载提示测试页面已就绪');
+        console.log('🎯 功能: 动画加载完成后自动隐藏加载提示');
+        console.log('📚 相关文件:');
+        console.log('  - template.html (已更新)');
+        console.log('  - config-with-p5-enhanced.json');
+        console.log('  - config-external-sketch.json');
+    </script>
+</body>
+</html>

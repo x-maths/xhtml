@@ -463,7 +463,7 @@
                         <span class="text-md font-bold" style="color: var(--accent-1)">📊 ${p5Config.title}</span>
                     </div>
                     <div id="${p5Config.containerId}" class="rounded-lg overflow-hidden" style="background: rgba(0,0,0,0.2); max-width: 100%; margin: 0 auto; min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                        <div class="text-sm" style="color: var(--text-secondary)">⏳ 加载动画中...</div>
+                        <div id="loading-${p5Config.containerId}" class="text-sm" style="color: var(--text-secondary)">⏳ 加载动画中...</div>
                     </div>
                     ${p5Config.caption ? `<div class="text-center mt-3 text-base" style="color: var(--text-secondary)">${p5Config.caption}</div>` : ''}
                 </div>
@@ -664,10 +664,28 @@
                 const containerId = sketch.containerId || findContainerIdForSketch(sketch.id);
                 
                 if (containerId && document.getElementById(containerId)) {
+                    // 隐藏加载提示
+                    const loadingElement = document.getElementById(`loading-${containerId}`);
+                    
                     // 创建p5实例，传入容器ID
                     const p5Instance = new p5((p) => {
                         // 调用sketch函数，传入p5实例和配置参数
                         sketchFunc(p, containerId, sketch.params || {});
+                        
+                        // 在setup完成后隐藏加载提示
+                        // 使用短延迟确保canvas已经添加到DOM
+                        setTimeout(() => {
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                            // 移除容器的flex布局，让canvas正常显示
+                            const container = document.getElementById(containerId);
+                            if (container) {
+                                container.style.display = 'block';
+                                container.style.alignItems = '';
+                                container.style.justifyContent = '';
+                            }
+                        }, 50);
                     });
                     
                     // 存储实例引用
