@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学冒险：余数星球探索</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.1.1/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', 'PingFang SC', sans-serif;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        /* 明暗主题变量 */
+        .light-theme {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a5568;
+            --accent-1: #00d4ff;
+            --accent-2: #7c3aed;
+            --accent-3: #f59e0b;
+            --border-glow: rgba(0, 212, 255, 0.15); /* Reduced opacity */
+            --border-line: rgba(0, 212, 255, 0.2); /* New subtle border var */
+            --card-shadow: rgba(0, 0, 0, 0.05);
+        }
+        
+        .dark-theme {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #161b33;
+            --text-primary: #e0e7ff;
+            --text-secondary: #a5b4fc;
+            --accent-1: #00ffff;
+            --accent-2: #a855f7;
+            --accent-3: #fbbf24;
+            --border-glow: rgba(0, 255, 255, 0.2);
+            --border-line: rgba(0, 255, 255, 0.3); /* New subtle border var */
+            --card-shadow: rgba(0, 255, 255, 0.1);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .cyber-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-line); /* Thinner, subtle border */
+            box-shadow: 0 0 20px var(--card-shadow), inset 0 0 20px rgba(124, 58, 237, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, var(--accent-1), var(--accent-2), var(--accent-1));
+            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.15; /* Reduced glow opacity */
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.3; }
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px var(--border-glow);
+        }
+        
+        .game-btn {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));
+            border: 1px solid var(--border-line);
+            color: var(--text-primary);
+            box-shadow: 0 0 10px var(--border-glow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-btn:hover::before {
+            left: 100%;
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(124, 58, 237, 0.2));
+            box-shadow: 0 0 15px var(--border-glow);
+            border-color: var(--accent-1);
+        }
+        
+        .game-btn:active {
+            transform: translateY(0);
+        }
+
+        .game-btn.correct {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .game-btn.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .hologram {
+            background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(124,58,237,0.05));
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-line);
+        }
+        
+        .theme-toggle {
+            width: 60px;
+            height: 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-line);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--border-glow);
+        }
+        
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 5px var(--accent-1);
+        }
+        
+        .theme-toggle.active .theme-toggle-slider {
+            transform: translateX(30px);
+        }
+        
+        .message-terminal {
+            background: rgba(0, 212, 255, 0.03);
+            border-left: 2px solid var(--border-line);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-line), transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.5;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .star-field {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        input[type="text"] {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-line);
+            color: var(--text-primary);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--accent-1);
+            outline: none;
+        }
+        
+        input[type="text"]::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        
+        .dialogue-box {
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .teacher-msg {
+            background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(168,85,247,0.1));
+            border-left: 2px solid var(--accent-2);
+        }
+        
+        .student-msg {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,255,0.1));
+            border-right: 2px solid var(--accent-1);
+        }
+        
+        .hp-bar {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-line);
+            overflow: hidden;
+        }
+        
+        .hp-fill {
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--accent-1);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-forward;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .locked-section {
+            filter: blur(5px) grayscale(0.8);
+            pointer-events: none;
+            opacity: 0.5;
+            transition: all 0.5s ease;
+        }
+        
+        
+        .unlocked-section {
+            filter: blur(0) grayscale(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* 音频按钮旋转动画 */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .rotating {
+            animation: rotate 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <script>
+        // 根据URL参数加载主题
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const theme = urlParams.get('theme');
+            
+            if (theme === 'light') {
+                document.body.classList.remove('dark-theme');
+                document.body.classList.add('light-theme');
+            } else if (theme === 'dark') {
+                document.body.classList.remove('light-theme');
+                document.body.classList.add('dark-theme');
+            }
+            // 如果没有参数，保持默认的 dark-theme
+        })();
+    </script>
+    <div id="star-field" class="star-field"></div>
+    
+    <!-- 游戏界面顶部 -->
+    <div class="sticky top-0 z-50 cyber-card rounded-b-3xl" style="position: sticky; top: 0;">
+        <div class="p-4">
+            
+            <!-- 游戏标题 -->
+            <h1 class="text-2xl font-black text-center neon-text mb-2">
+                数学冒险：余数星球
+            </h1>
+            <p class="text-base text-center" style="color: var(--text-secondary)">
+                [ MISSION: 解锁同余定理的秘密 ]
+            </p>
+            
+            <!-- 能量条 -->
+            <div class="mt-4">
+                <div class="flex justify-between text-sm mb-1" style="color: var(--text-secondary)">
+                    <span>知识能量</span>
+                    <span id="energy-text">0 / 100</span>
+                </div>
+                <div class="hp-bar rounded-full h-4">
+                    <div id="energy-bar" class="hp-fill rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- 音频播放器（隐藏） -->
+            <audio id="bg-audio" style="display: none;">
+                <source src="https://cdn.jsdelivr.net/gh/x-maths/xhtml@20251209/audio/L1_07.wav" type="audio/wav">
+            </audio>
+        </div>
+    </div>
+
+    <!-- 音频控制按钮（右下角） -->
+    <div id="audio-control" onclick="toggleAudio()" style="position: fixed; bottom: 80px; right: 20px; z-index: 40; cursor: pointer; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px var(--border-glow); transition: all 0.3s ease;">
+        <span style="font-size: 28px;">🎵</span>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 py-6 space-y-6 pb-24">
+        <!-- 任务简报 -->
+        <div class="cyber-card rounded-2xl p-5 relative">
+            <div class="scan-line"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full" style="background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); display: flex; align-items: center; justify-content: center;">
+                    <span class="text-xl">📡</span>
+                </div>
+                <h2 class="text-xl font-bold">任务简报</h2>
+            </div>
+            <div class="space-y-2 text-base" style="color: var(--text-secondary)">
+                <p>指挥官，欢迎来到余数星球！</p>
+                <p>完成对话特训，解锁同余定理的终极秘密！</p>
+            </div>
+        </div>
+
+        <!-- 剧情流 -->
+        <div id="story-stream" class="space-y-6">
+            
+            <!-- STAGE 1: 引入 -->
+            <div id="stage-1" class="space-y-4 fade-in">
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">同学们，大家有没有遇到过这样的情况：分蛋糕、分糖果的时候，刚好分完的情况不多，是不是经常会剩下一点点呢？</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">有有有！我分饼干的时候就常常剩下几块！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">哈哈，对啦！今天我们要认识的就是这个“剩下一点点”的小伙伴，它在数学里有个好听的名字，叫做“余数”。比如，我们有十个苹果，分给三位小朋友，每人分几个？还剩几个呀？</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">每人分三个，还剩一个！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">太棒了！这里“剩下一个”的“一”，就是余数。在除法里，我们写成“十除以三等于三，余一”。记住哦，这个余数呀，它总是会比我们用来除的那个数，也就是“除数”，要小。就像分苹果，不可能剩下三个或更多，不然还能再分出去呢！</p>
+                </div>
+
+                <!-- 插入 关卡 1 -->
+                <div class="cyber-card rounded-2xl p-4 mt-6 border border-dashed border-opacity-50" style="border-color: var(--accent-3);">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-base font-bold text-yellow-400">⚡ 突发测试: 基础计算</span>
+                        <span class="text-sm px-2 py-1 rounded bg-yellow-400/20 text-yellow-400">+33 EXP</span>
+                    </div>
+                    <div class="text-base mb-4 text-center">
+                        <p class="mb-2">17 个数据包 ÷ 5 个节点</p>
+                        <p class="text-sm text-gray-400">余数是多少？</p>
+                    </div>
+                    <div id="level-1-options" class="grid grid-cols-4 gap-2">
+                        <button onclick="checkAnswer(1, 1)" class="game-btn py-3 rounded-lg font-bold text-lg">1</button>
+                        <button onclick="checkAnswer(1, 2)" class="game-btn py-3 rounded-lg font-bold text-lg">2</button>
+                        <button onclick="checkAnswer(1, 3)" class="game-btn py-3 rounded-lg font-bold text-lg">3</button>
+                        <button onclick="checkAnswer(1, 4)" class="game-btn py-3 rounded-lg font-bold text-lg">4</button>
+                    </div>
+                    <div id="feedback-1" class="hidden mt-3 text-center text-sm font-bold text-green-400">
+                        ✅ 回答正确！
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAGE 2: 进阶 -->
+            <div class="space-y-4 fade-in">
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">哦，原来余数不能比除数大呀！那它能是零吗？</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">好问题！当然可以啦！如果刚好分完了，没有剩下，那余数就是零。比如十个苹果分给五位小朋友，每人分两个，一个不剩，余数就是零。</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">除了余数，我们今天要认识的第二个好朋友，叫做“同余”。听起来有点深奥，其实它可有趣了！你们想一想，数字八除以五余数是多少？</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">八除以五，余数是三！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">真聪明！那数字十三除以五，余数又是多少呢？</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">十三除以五，也余三！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">哇，你们发现什么秘密了吗？八和十三，虽然它们本身是不同的数字，但是它们除以五之后，余数都是三！当两个数被同一个数除，得到的余数都一样的时候，我们就说这两个数“同余”。这个“同一个数”，比如刚才的“五”，我们就把它叫做“模数”。</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">老师，那“同余”有什么用呀？它是不是就像数字们的“好朋友关系”呀？</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">你说的太形象了！就是这个意思！“同余”在解决一些有规律、有周期的问题时特别厉害。比如，我们平时算星期几，就是用的“同余”思想哦！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">我们来举个例子吧！今天星期一，过十天是星期几呢？</p>
+                </div>
+
+                <!-- 插入 关卡 2 -->
+                <div class="cyber-card rounded-2xl p-4 mt-6 border border-dashed border-opacity-50" style="border-color: var(--accent-3);">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-base font-bold text-yellow-400">🕑 突发测试: 时间循环</span>
+                        <span class="text-sm px-2 py-1 rounded bg-yellow-400/20 text-yellow-400">+33 EXP</span>
+                    </div>
+                     <div class="text-base mb-4 text-center">
+                        <p class="mb-2">今天是星期一，过了10天是星期几？</p>
+                        <p class="text-sm text-gray-400 text-left bg-black/20 p-2 rounded mt-2">提示：10 ÷ 7 = ? ... ?</p>
+                    </div>
+                    <div id="level-2-options" class="grid grid-cols-2 gap-2">
+                        <button onclick="checkAnswer(2, '三')" class="game-btn py-3 rounded-lg font-bold text-base">星期三</button>
+                        <button onclick="checkAnswer(2, '四')" class="game-btn py-3 rounded-lg font-bold text-base">星期四</button>
+                        <button onclick="checkAnswer(2, '五')" class="game-btn py-3 rounded-lg font-bold text-base">星期五</button>
+                        <button onclick="checkAnswer(2, '六')" class="game-btn py-3 rounded-lg font-bold text-base">星期六</button>
+                    </div>
+                    <div id="feedback-2" class="hidden mt-3 text-center text-sm font-bold text-green-400">
+                        ✅ 计算完美！
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAGE 3: 终极 -->
+            <div class="space-y-4 fade-in">
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">嗯……星期一、星期二、星期三、星期四……星期四！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">你数得很快！那你是怎么想的呢？</p>
+                </div>
+                <div class="dialogue-box student-msg rounded-xl p-4 ml-8">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-1)">学生</div>
+                    <p class="text-base leading-relaxed">我知道星期是七天一个循环，所以十天里面有几个七天，剩下几天就往后数几天。十除以七，余数是三，所以从星期一开始往后数三天，就是星期四！</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">太棒了！你就是个小小数学家！这里的七就是我们的“模数”，因为星期是七天一个周期。这个方法就是利用了我们今天学的“同余”思想哦！它帮助我们把一个很大的数字，变成了比较小的数字来计算，是不是很方便呢？</p>
+                </div>
+                <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">同学们，今天我们认识了两位好朋友。“余数”是除法中分剩下的部分，而且总比除数小。如果两个数除以同一个数，余数相同，那么它们就是“同余”的，这对解决周期性问题特别有用。</p>
+                </div>
+                 <div class="dialogue-box teacher-msg rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: var(--accent-2)">老师</div>
+                    <p class="text-base leading-relaxed">那现在老师有一个小问题想考考大家。如果现在是上午十点，再过十五个小时是几点呢？（注意是上午还是下午哦！）大家可以课后思考一下！</p>
+                </div>
+
+                <!-- BOSS 战 -->
+                <div class="cyber-card rounded-2xl p-5 border-red-500/50 mt-6">
+                    <div class="flex justify-center mb-4">
+                        <span class="px-4 py-2 rounded-full text-sm font-bold bg-red-600 text-white shadow-lg shadow-red-500/50">⚔️ BOSS FIGHT</span>
+                    </div>
+                    
+                    <div class="text-center space-y-4">
+                        <div class="hologram p-4 rounded-xl">
+                            <h3 class="text-red-400 font-bold mb-2 text-lg">Ω 时空折叠</h3>
+                            <p class="text-base mb-1">当前时间: <span class="text-white">上午 10:00</span></p>
+                            <p class="text-base mb-3">时间跳跃: <span class="text-yellow-400">+15 小时</span></p>
+                            <p class="text-sm text-gray-400">请计算新的时间点 (24小时制 或 上午/下午)</p>
+                        </div>
+
+                         <div id="boss-interaction">
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="checkBoss('凌晨1点')" class="game-btn py-3 rounded-lg font-bold text-base text-red-300 border-red-500/30 hover:border-red-500">凌晨1点</button>
+                                <button onclick="checkBoss('下午1点')" class="game-btn py-3 rounded-lg font-bold text-base text-red-300 border-red-500/30 hover:border-red-500">下午1点</button>
+                                <button onclick="checkBoss('凌晨12点')" class="game-btn py-3 rounded-lg font-bold text-base text-red-300 border-red-500/30 hover:border-red-500">凌晨12点</button>
+                                <button onclick="checkBoss('凌晨2点')" class="game-btn py-3 rounded-lg font-bold text-base text-red-300 border-red-500/30 hover:border-red-500">凌晨2点</button>
+                            </div>
+                        </div>
+                         <div id="feedback-3" class="hidden mt-3 text-center font-bold text-green-400 space-y-2">
+                             <p class="text-xl">🎉 任务完成！</p>
+                             <p class="text-sm text-gray-300">你已掌握同余之力！</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务总结 -->
+        <div class="cyber-card rounded-2xl p-5">
+            <h2 class="text-xl font-bold text-center mb-4" style="color: var(--accent-1)">
+                📊 任务情报汇总
+            </h2>
+            <div class="space-y-3">
+                <div class="hologram rounded-lg p-3">
+                    <div class="text-base font-bold mb-2" style="color: var(--accent-1)">[ 余数系统 ]</div>
+                    <p class="text-sm" style="color: var(--text-secondary)">除法运算后的剩余单元，恒小于除数基数</p>
+                </div>
+                <div class="hologram rounded-lg p-3">
+                    <div class="text-base font-bold mb-2" style="color: var(--accent-1)">[ 同余协议 ]</div>
+                    <p class="text-sm" style="color: var(--text-secondary)">相同模数下余数相等的数值关系</p>
+                </div>
+                <div class="hologram rounded-lg p-3">
+                    <div class="text-base font-bold mb-2" style="color: var(--accent-1)">[ 实战应用 ]</div>
+                    <p class="text-sm" style="color: var(--text-secondary)">周期性问题（如时间、循环列表）的高效解决方案</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let energy = 0;
+        const totalEnergy = 100;
+
+        // 音频控制
+        function toggleAudio() {
+            const audio = document.getElementById('bg-audio');
+            const control = document.getElementById('audio-control');
+            
+            if (audio.paused) {
+                audio.play();
+                control.classList.add('rotating');
+            } else {
+                audio.pause();
+                control.classList.remove('rotating');
+            }
+        }
+
+        // 更新能量条
+        function updateEnergy(amount) {
+            energy = Math.min(energy + amount, totalEnergy);
+            document.getElementById('energy-bar').style.width = `${energy}%`;
+            document.getElementById('energy-text').innerText = `${energy} / 100`;
+        }
+
+        // 检查关卡1答案
+        function checkAnswer(level, answer) {
+            if (level === 1) {
+                // 17 / 5 = 3 ... 2
+                const correct = 2;
+                const feedback = document.getElementById('feedback-1');
+                const btns = document.querySelectorAll('#level-1-options button');
+                
+                if (answer === correct) {
+                    feedback.classList.remove('hidden');
+                    updateEnergy(33);
+                    btns.forEach(btn => {
+                        if (parseInt(btn.innerText) === correct) btn.classList.add('correct');
+                        else btn.classList.add('opacity-50');
+                        btn.disabled = true;
+                    });
+                } else {
+                    // Find the button clicked and make it red
+                    btns.forEach(btn => {
+                         if (parseInt(btn.innerText) === answer) {
+                             btn.classList.add('wrong');
+                             setTimeout(() => btn.classList.remove('wrong'), 500);
+                         }
+                    });
+                }
+            } else if (level === 2) {
+                // Mon + 10 days = Mon + 3 = Thu
+                const correct = '四';
+                const feedback = document.getElementById('feedback-2');
+                const btns = document.querySelectorAll('#level-2-options button');
+                
+                if (answer === correct) {
+                    feedback.classList.remove('hidden');
+                    updateEnergy(33);
+                    btns.forEach(btn => {
+                        if (btn.innerText.includes(correct)) btn.classList.add('correct');
+                        else btn.classList.add('opacity-50');
+                        btn.disabled = true;
+                    });
+                } else {
+                     btns.forEach(btn => {
+                         if (btn.innerText.includes(answer)) {
+                             btn.classList.add('wrong');
+                             setTimeout(() => btn.classList.remove('wrong'), 500);
+                         }
+                    });
+                }
+            }
+        }
+
+
+        // 检查Boss关卡
+        function checkBoss(answer) {
+            // 10 + 15 = 25 = 1 (AM)
+            const correctAnswer = '凌晨1点';
+            const feedback = document.getElementById('feedback-3');
+            const interaction = document.getElementById('boss-interaction');
+            const btns = document.querySelectorAll('#boss-interaction button');
+
+            if (answer === correctAnswer) {
+                updateEnergy(34); // Total 100
+                btns.forEach(btn => {
+                    if (btn.innerText === correctAnswer) btn.classList.add('correct');
+                    else btn.classList.add('opacity-50');
+                    btn.disabled = true;
+                });
+                
+                setTimeout(() => {
+                    interaction.classList.add('hidden');
+                    feedback.classList.remove('hidden');
+                    // Celebration effect
+                    createFireworks();
+                }, 500);
+            } else {
+                btns.forEach(btn => {
+                    if (btn.innerText === answer) {
+                        btn.classList.add('wrong');
+                        setTimeout(() => btn.classList.remove('wrong'), 500);
+                    }
+                });
+            }
+        }
+
+
+        // 解锁阶段动画
+        function unlockStage(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            // Allow layout reflow then fade in
+            setTimeout(() => {
+                el.classList.remove('opacity-0');
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // P5 Background (Simple Starfield)
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('star-field');
+            noStroke();
+        }
+
+        let stars = [];
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+
+        function draw() {
+            clear();
+            fill(255);
+            for (let star of stars) {
+                ellipse(star.x, star.y, star.size);
+                star.y += star.speed;
+                if (star.y > height) star.y = 0;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // Fireworks for victory
+        function createFireworks() {
+            // Simplified confetti/fireworks
+            const colors = ['#00d4ff', '#7c3aed', '#f59e0b', '#ef4444'];
+            for(let i=0; i<50; i++) {
+                const div = document.createElement('div');
+                div.style.position = 'fixed';
+                div.style.left = '50%';
+                div.style.top = '50%';
+                div.style.width = '10px';
+                div.style.height = '10px';
+                div.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                div.style.borderRadius = '50%';
+                div.style.transition = 'all 1s ease-out';
+                div.style.zIndex = '100';
+                document.body.appendChild(div);
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 200 + 50;
+                
+                setTimeout(() => {
+                    div.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`;
+                    div.style.opacity = '0';
+                }, 10);
+
+                setTimeout(() => div.remove(), 1000);
+            }
+        }
+    </script>
+</body>
+</html>
