@@ -1,0 +1,114 @@
+{
+  "title": "数学冒险:余数星球探索(含动画)",
+  "subtitle": "[ MISSION: 解锁同余定理的秘密 ]",
+  "missionIcon": "📡",
+  "energyLabel": "知识能量",
+  "audioUrl": "https://cdn.jsdelivr.net/gh/x-maths/xhtml@20251209/audio/L1_07.wav",
+  "missionBrief": [
+    "指挥官,欢迎来到余数星球!",
+    "完成对话特训,解锁同余定理的终极秘密!"
+  ],
+  "summaryTitle": "任务情报汇总",
+  "stages": [
+    {
+      "id": "stage-1",
+      "content": [
+        {
+          "type": "dialogue",
+          "speaker": "teacher",
+          "content": "同学们,大家有没有遇到过这样的情况:分蛋糕、分糖果的时候,刚好分完的情况不多,是不是经常会剩下一点点呢?"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "student",
+          "content": "有有有!我分饼干的时候就常常剩下几块!"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "teacher",
+          "content": "哈哈,对啦!今天我们要认识的就是这个\"剩下一点点\"的小伙伴,它在数学里有个好听的名字,叫做\"余数\"。比如,我们有十个苹果,分给三位小朋友,每人分几个?还剩几个呀?"
+        },
+        {
+          "type": "p5",
+          "title": "可视化演示",
+          "containerId": "remainder-demo",
+          "caption": "10 ÷ 3 = 3 ... 1",
+          "sketchId": "remainderSketch"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "student",
+          "content": "每人分三个,还剩一个!"
+        },
+        {
+          "type": "level",
+          "id": "level-1",
+          "title": "⚡ 突发测试: 基础计算",
+          "exp": 50,
+          "question": "17 个数据包 ÷ 5 个节点",
+          "hint": "余数是多少?",
+          "correctAnswer": 2,
+          "gridCols": 4,
+          "options": [
+            {"label": "1", "value": 1},
+            {"label": "2", "value": 2},
+            {"label": "3", "value": 3},
+            {"label": "4", "value": 4}
+          ],
+          "feedback": "回答正确!"
+        }
+      ]
+    },
+    {
+      "id": "stage-2",
+      "content": [
+        {
+          "type": "dialogue",
+          "speaker": "teacher",
+          "content": "那现在老师有一个小问题想考考大家。如果现在是上午十点,再过十五个小时是几点呢?"
+        },
+        {
+          "type": "boss",
+          "title": "Ω 时空折叠",
+          "description": "当前时间: 上午 10:00 | 时间跳跃: +15 小时",
+          "hint": "请计算新的时间点 (24小时制 或 上午/下午)",
+          "correctAnswer": "凌晨1点",
+          "options": [
+            {"label": "凌晨1点", "value": "凌晨1点"},
+            {"label": "下午1点", "value": "下午1点"},
+            {"label": "凌晨12点", "value": "凌晨12点"},
+            {"label": "凌晨2点", "value": "凌晨2点"}
+          ],
+          "successMessage": "任务完成!",
+          "successDetail": "你已掌握同余之力!"
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "title": "[ 余数系统 ]",
+      "content": "除法运算后的剩余单元,恒小于除数基数"
+    },
+    {
+      "title": "[ 同余协议 ]",
+      "content": "相同模数下余数相等的数值关系"
+    },
+    {
+      "title": "[ 实战应用 ]",
+      "content": "周期性问题(如时间、循环列表)的高效解决方案"
+    }
+  ],
+  "p5Sketches": [
+    {
+      "id": "remainderSketch",
+      "description": "余数演示动画 - 10个苹果分给3个小朋友",
+      "containerId": "remainder-demo",
+      "params": {
+        "totalApples": 10,
+        "totalKids": 3
+      },
+      "code": "(function(p, containerId, params) {\n  const totalApples = params.totalApples || 10;\n  const totalKids = params.totalKids || 3;\n  let apples = [];\n  let kids = [];\n  let animationStep = 0;\n  let stepTimer = 0;\n  let canvasWidth = 400;\n  let canvasHeight = 300;\n  \n  p.setup = function() {\n    const container = document.getElementById(containerId);\n    if (container) {\n      canvasWidth = Math.min(400, container.clientWidth - 20);\n      canvasHeight = 300;\n    }\n    const canvas = p.createCanvas(canvasWidth, canvasHeight);\n    canvas.parent(containerId);\n    \n    // 初始化苹果位置\n    for (let i = 0; i < totalApples; i++) {\n      apples.push({\n        x: 50 + (i % 5) * 60,\n        y: 50 + Math.floor(i / 5) * 60,\n        targetX: 0,\n        targetY: 0,\n        assigned: false,\n        kidIndex: -1\n      });\n    }\n    \n    // 初始化小朋友位置\n    const spacing = canvasWidth / (totalKids + 1);\n    for (let i = 0; i < totalKids; i++) {\n      kids.push({\n        x: spacing * (i + 1),\n        y: canvasHeight - 80,\n        count: 0\n      });\n    }\n  };\n  \n  p.draw = function() {\n    p.background(20, 25, 50);\n    \n    // 绘制标题\n    p.fill(100, 212, 255);\n    p.textAlign(p.CENTER);\n    p.textSize(16);\n    p.text(`${totalApples} ÷ ${totalKids} = ?`, canvasWidth / 2, 25);\n    \n    // 动画逻辑\n    stepTimer++;\n    if (stepTimer > 60 && animationStep < totalApples) {\n      const apple = apples[animationStep];\n      const kidIndex = animationStep % totalKids;\n      apple.assigned = true;\n      apple.kidIndex = kidIndex;\n      apple.targetX = kids[kidIndex].x;\n      apple.targetY = kids[kidIndex].y - 40 - kids[kidIndex].count * 25;\n      kids[kidIndex].count++;\n      animationStep++;\n      stepTimer = 0;\n    }\n    \n    // 绘制苹果\n    for (let apple of apples) {\n      if (apple.assigned) {\n        apple.x = p.lerp(apple.x, apple.targetX, 0.1);\n        apple.y = p.lerp(apple.y, apple.targetY, 0.1);\n      }\n      \n      // 苹果颜色根据是否分配改变\n      if (apple.assigned) {\n        p.fill(100, 212, 255);\n      } else {\n        p.fill(251, 191, 36);\n      }\n      p.noStroke();\n      p.ellipse(apple.x, apple.y, 20, 20);\n      p.fill(139, 69, 19);\n      p.rect(apple.x - 2, apple.y - 12, 4, 8);\n    }\n    \n    // 绘制小朋友\n    for (let i = 0; i < kids.length; i++) {\n      const kid = kids[i];\n      p.fill(168, 85, 247);\n      p.ellipse(kid.x, kid.y, 40, 40);\n      p.fill(255);\n      p.textSize(12);\n      p.textAlign(p.CENTER);\n      p.text(`👦${i + 1}`, kid.x, kid.y + 5);\n      \n      // 显示数量\n      p.fill(100, 212, 255);\n      p.textSize(14);\n      p.text(kid.count, kid.x, kid.y + 60);\n    }\n    \n    // 显示结果\n    if (animationStep >= totalApples) {\n      const quotient = Math.floor(totalApples / totalKids);\n      const remainder = totalApples % totalKids;\n      p.fill(34, 197, 94);\n      p.textSize(18);\n      p.textAlign(p.CENTER);\n      p.text(`每人 ${quotient} 个, 余 ${remainder} 个`, canvasWidth / 2, canvasHeight - 20);\n    }\n  };\n  \n  p.windowResized = function() {\n    const container = document.getElementById(containerId);\n    if (container) {\n      canvasWidth = Math.min(400, container.clientWidth - 20);\n      p.resizeCanvas(canvasWidth, canvasHeight);\n    }\n  };\n})"
+    }
+  ]
+}

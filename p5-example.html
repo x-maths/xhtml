@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5动画示例</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.1.1/lib/p5.js"></script>
+    <style>
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .cyber-card {
+            background: #161b33;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        h1 {
+            text-align: center;
+            color: #00ffff;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .font-bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>余数演示动画</h1>
+    
+    <div class="cyber-card">
+        <div class="text-center" style="margin-bottom: 12px;">
+            <span class="font-bold" style="color: #00ffff">📊 可视化演示</span>
+        </div>
+        <div id="remainder-demo" style="background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;"></div>
+        <div class="text-center" style="margin-top: 12px; color: #a5b4fc;">
+            10 ÷ 3 = 3 ... 1
+        </div>
+    </div>
+
+    <script>
+        // 余数演示动画 (p5.js instance mode)
+        const remainderSketch = function(p) {
+            let apples = [];
+            let kids = [];
+            let animationStep = 0;
+            let stepTimer = 0;
+            const totalApples = 10;
+            const totalKids = 3;
+            let canvasWidth = 400;
+            let canvasHeight = 300;
+            
+            p.setup = function() {
+                // 获取容器宽度
+                const container = document.getElementById('remainder-demo');
+                canvasWidth = Math.min(container.offsetWidth, 400);
+                canvasHeight = canvasWidth * 0.75; // 保持4:3比例
+                
+                const canvas = p.createCanvas(canvasWidth, canvasHeight);
+                canvas.parent('remainder-demo');
+                
+                initPositions();
+            };
+            
+            function initPositions() {
+                apples = [];
+                kids = [];
+                
+                // 根据画布宽度计算缩放比例
+                const scale = canvasWidth / 400;
+                
+                // 初始化苹果位置（顶部一排）
+                for (let i = 0; i < totalApples; i++) {
+                    apples.push({
+                        x: (40 + (i % 5) * 70) * scale,
+                        y: (40 + Math.floor(i / 5) * 60) * scale,
+                        targetX: 0,
+                        targetY: 0,
+                        assigned: false,
+                        kidIndex: -1
+                    });
+                }
+                
+                // 初始化小朋友位置（底部）
+                for (let i = 0; i < totalKids; i++) {
+                    kids.push({
+                        x: (80 + i * 120) * scale,
+                        y: 220 * scale,
+                        count: 0
+                    });
+                }
+            }
+            
+            p.draw = function() {
+                p.background(10, 15, 35);
+                const scale = canvasWidth / 400;
+                
+                // 绘制标题
+                p.fill(100, 200, 255);
+                p.textSize(16 * scale);
+                p.textAlign(p.CENTER);
+                p.text('10个苹果 ÷ 3个小朋友', canvasWidth / 2, 25 * scale);
+                
+                // 动画逻辑
+                stepTimer++;
+                if (stepTimer > 60 && animationStep < totalApples) {
+                    stepTimer = 0;
+                    const apple = apples[animationStep];
+                    const kidIndex = animationStep % totalKids;
+                    
+                    if (animationStep < 9) { // 前9个分配给小朋友
+                        apple.assigned = true;
+                        apple.kidIndex = kidIndex;
+                        apple.targetX = kids[kidIndex].x - 30 * scale + (kids[kidIndex].count % 3) * 30 * scale;
+                        apple.targetY = kids[kidIndex].y - 20 * scale - Math.floor(kids[kidIndex].count / 3) * 30 * scale;
+                        kids[kidIndex].count++;
+                    }
+                    animationStep++;
+                }
+                
+                // 绘制小朋友
+                for (let i = 0; i < kids.length; i++) {
+                    p.fill(124, 58, 237, 150);
+                    p.ellipse(kids[i].x, kids[i].y, 50 * scale, 50 * scale);
+                    p.fill(255);
+                    p.textSize(12 * scale);
+                    p.textAlign(p.CENTER);
+                    p.text('👦', kids[i].x, kids[i].y + 5 * scale);
+                    p.text(kids[i].count + '个', kids[i].x, kids[i].y + 40 * scale);
+                }
+                
+                // 绘制苹果
+                for (let i = 0; i < apples.length; i++) {
+                    const apple = apples[i];
+                    
+                    if (apple.assigned) {
+                        // 移动到目标位置
+                        apple.x = p.lerp(apple.x, apple.targetX, 0.1);
+                        apple.y = p.lerp(apple.y, apple.targetY, 0.1);
+                    }
+                    
+                    // 绘制苹果
+                    if (i === 9 && animationStep > 9) {
+                        // 最后一个苹果（余数）用不同颜色
+                        p.fill(255, 200, 0);
+                        p.stroke(255, 150, 0);
+                    } else {
+                        p.fill(255, 100, 100);
+                        p.stroke(200, 50, 50);
+                    }
+                    p.strokeWeight(2 * scale);
+                    p.ellipse(apple.x, apple.y, 25 * scale, 25 * scale);
+                    p.noStroke();
+                    p.fill(255);
+                    p.textSize(16 * scale);
+                    p.text('🍎', apple.x, apple.y + 5 * scale);
+                }
+                
+                // 显示余数提示
+                if (animationStep > 9) {
+                    p.fill(255, 200, 0);
+                    p.textSize(16 * scale);
+                    p.textAlign(p.CENTER);
+                    p.text('余数：1个苹果', 320 * scale, apples[9].y - 16);
+                }
+            };
+        };
+        
+        // 创建余数演示动画实例
+        new p5(remainderSketch);
+    </script>
+</body>
+</html>

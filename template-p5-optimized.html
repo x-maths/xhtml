@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5动画完整示例 - 使用模板</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.1.1/lib/p5.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', 'PingFang SC', sans-serif;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .dark-theme {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #161b33;
+            --text-primary: #e0e7ff;
+            --text-secondary: #a5b4fc;
+            --accent-1: #00ffff;
+            --accent-2: #a855f7;
+            --accent-3: #fbbf24;
+            --border-glow: rgba(0, 255, 255, 0.2);
+            --border-line: rgba(0, 255, 255, 0.3);
+            --card-shadow: rgba(0, 255, 255, 0.1);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .cyber-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-line);
+            box-shadow: 0 0 20px var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dialogue-box {
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .teacher-msg {
+            background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(168,85,247,0.1));
+            border-left: 2px solid var(--accent-2);
+        }
+        
+        .student-msg {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,255,0.1));
+            border-right: 2px solid var(--accent-1);
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="max-w-md mx-auto px-4 py-6 space-y-6">
+        <h1 class="text-2xl font-black text-center mb-6" style="color: var(--accent-1);">
+            余数演示 - 优化版P5动画
+        </h1>
+        
+        <div id="content-container" class="space-y-6">
+            <!-- 内容将通过 JavaScript 动态加载 -->
+        </div>
+    </div>
+
+    <script>
+        // ==================== P5 Sketch 定义（必须在CONFIG之前） ====================
+        
+        // 余数演示动画
+        const remainderSketch = function(p) {
+            let apples = [];
+            let kids = [];
+            let animationStep = 0;
+            let stepTimer = 0;
+            const totalApples = 10;
+            const totalKids = 3;
+            let canvasWidth = 400;
+            let canvasHeight = 300;
+            
+            p.setup = function() {
+                const container = document.getElementById('remainder-demo');
+                if (!container) {
+                    console.error('容器 remainder-demo 未找到');
+                    return;
+                }
+                
+                canvasWidth = Math.min(container.offsetWidth, 400);
+                canvasHeight = canvasWidth * 0.75;
+                
+                const canvas = p.createCanvas(canvasWidth, canvasHeight);
+                canvas.parent('remainder-demo');
+                
+                initPositions();
+            };
+            
+            function initPositions() {
+                apples = [];
+                kids = [];
+                const scale = canvasWidth / 400;
+                
+                for (let i = 0; i < totalApples; i++) {
+                    apples.push({
+                        x: (40 + (i % 5) * 70) * scale,
+                        y: (40 + Math.floor(i / 5) * 60) * scale,
+                        targetX: 0,
+                        targetY: 0,
+                        assigned: false,
+                        kidIndex: -1
+                    });
+                }
+                
+                for (let i = 0; i < totalKids; i++) {
+                    kids.push({
+                        x: (80 + i * 120) * scale,
+                        y: 220 * scale,
+                        count: 0
+                    });
+                }
+            }
+            
+            p.draw = function() {
+                p.background(10, 15, 35);
+                const scale = canvasWidth / 400;
+                
+                p.fill(100, 200, 255);
+                p.textSize(16 * scale);
+                p.textAlign(p.CENTER);
+                p.text('10个苹果 ÷ 3个小朋友', canvasWidth / 2, 25 * scale);
+                
+                stepTimer++;
+                if (stepTimer > 60 && animationStep < totalApples) {
+                    stepTimer = 0;
+                    const apple = apples[animationStep];
+                    const kidIndex = animationStep % totalKids;
+                    
+                    if (animationStep < 9) {
+                        apple.assigned = true;
+                        apple.kidIndex = kidIndex;
+                        apple.targetX = kids[kidIndex].x - 30 * scale + (kids[kidIndex].count % 3) * 30 * scale;
+                        apple.targetY = kids[kidIndex].y - 20 * scale - Math.floor(kids[kidIndex].count / 3) * 30 * scale;
+                        kids[kidIndex].count++;
+                    }
+                    animationStep++;
+                }
+                
+                for (let i = 0; i < kids.length; i++) {
+                    p.fill(124, 58, 237, 150);
+                    p.ellipse(kids[i].x, kids[i].y, 50 * scale, 50 * scale);
+                    p.fill(255);
+                    p.textSize(12 * scale);
+                    p.textAlign(p.CENTER);
+                    p.text('👦', kids[i].x, kids[i].y + 5 * scale);
+                    p.text(kids[i].count + '个', kids[i].x, kids[i].y + 40 * scale);
+                }
+                
+                for (let i = 0; i < apples.length; i++) {
+                    const apple = apples[i];
+                    
+                    if (apple.assigned) {
+                        apple.x = p.lerp(apple.x, apple.targetX, 0.1);
+                        apple.y = p.lerp(apple.y, apple.targetY, 0.1);
+                    }
+                    
+                    if (i === 9 && animationStep > 9) {
+                        p.fill(255, 200, 0);
+                        p.stroke(255, 150, 0);
+                    } else {
+                        p.fill(255, 100, 100);
+                        p.stroke(200, 50, 50);
+                    }
+                    p.strokeWeight(2 * scale);
+                    p.ellipse(apple.x, apple.y, 25 * scale, 25 * scale);
+                    p.noStroke();
+                    p.fill(255);
+                    p.textSize(16 * scale);
+                    p.text('🍎', apple.x, apple.y + 5 * scale);
+                }
+                
+                if (animationStep > 9) {
+                    p.fill(255, 200, 0);
+                    p.textSize(16 * scale);
+                    p.textAlign(p.CENTER);
+                    p.text('余数：1个苹果', 320 * scale, apples[9].y - 16);
+                }
+            };
+        };
+        
+        // ==================== 配置数据 ====================
+        
+        const CONFIG = {
+            stages: [
+                {
+                    content: [
+                        {
+                            type: "dialogue",
+                            speaker: "teacher",
+                            content: "同学们，今天我们来学习余数。比如，我们有十个苹果，分给三位小朋友，每人分几个？还剩几个呀？"
+                        },
+                        {
+                            type: "p5",
+                            title: "可视化演示",
+                            containerId: "remainder-demo",
+                            caption: "10 ÷ 3 = 3 ... 1",
+                            sketchId: "remainderSketch"
+                        },
+                        {
+                            type: "dialogue",
+                            speaker: "student",
+                            content: "每人分三个，还剩一个！"
+                        },
+                        {
+                            type: "dialogue",
+                            speaker: "teacher",
+                            content: "太棒了！这里\"剩下一个\"的\"一\"，就是余数。"
+                        }
+                    ]
+                }
+            ],
+            p5Sketches: [
+                {
+                    id: "remainderSketch",
+                    sketchFunction: remainderSketch  // 直接引用函数
+                }
+            ]
+        };
+        
+        // ==================== 渲染函数（从template.html复制） ====================
+        
+        function renderDialogue(dialogue) {
+            const speaker = dialogue.speaker || 'teacher';
+            const className = speaker === 'teacher' ? 'teacher-msg' : 'student-msg ml-8';
+            const color = speaker === 'teacher' ? 'var(--accent-2)' : 'var(--accent-1)';
+            const speakerLabel = speaker === 'teacher' ? '老师' : '学生';
+            
+            return `
+                <div class="dialogue-box ${className} rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: ${color}">${speakerLabel}</div>
+                    <p class="text-base leading-relaxed">${dialogue.content}</p>
+                </div>
+            `;
+        }
+        
+        function renderP5(p5Config) {
+            return `
+                <div class="cyber-card rounded-2xl p-4 my-4">
+                    <div class="text-center mb-3">
+                        <span class="text-md font-bold" style="color: var(--accent-1)">📊 ${p5Config.title}</span>
+                    </div>
+                    <div id="${p5Config.containerId}" class="rounded-lg overflow-hidden" style="background: rgba(0,0,0,0.2); max-width: 100%; margin: 0 auto; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <div class="text-sm" style="color: var(--text-secondary)">⏳ 加载动画中...</div>
+                    </div>
+                    ${p5Config.caption ? `<div class="text-center mt-3 text-base" style="color: var(--text-secondary)">${p5Config.caption}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        function renderStage(stage) {
+            let html = '<div class="space-y-4">';
+            
+            stage.content.forEach(item => {
+                if (item.type === 'dialogue') {
+                    html += renderDialogue(item);
+                } else if (item.type === 'p5') {
+                    html += renderP5(item);
+                }
+            });
+            
+            html += '</div>';
+            return html;
+        }
+        
+        // ==================== 初始化（使用优化后的逻辑） ====================
+        
+        function init() {
+            // 渲染内容
+            const contentContainer = document.getElementById('content-container');
+            contentContainer.innerHTML = CONFIG.stages.map(stage => renderStage(stage)).join('');
+            
+            // 初始化 p5 动画（优化版）
+            if (CONFIG.p5Sketches) {
+                setTimeout(() => {
+                    CONFIG.p5Sketches.forEach(sketch => {
+                        try {
+                            let sketchFunc = sketch.sketchFunction;
+                            
+                            // 如果是字符串，尝试从全局作用域获取函数
+                            if (typeof sketchFunc === 'string') {
+                                sketchFunc = window[sketchFunc];
+                            }
+                            
+                            // 如果sketch有ID，也尝试从全局作用域获取
+                            if (!sketchFunc && sketch.id) {
+                                sketchFunc = window[sketch.id];
+                            }
+                            
+                            if (typeof sketchFunc === 'function') {
+                                const p5Instance = new p5(sketchFunc);
+                                
+                                // 存储实例引用
+                                if (sketch.id) {
+                                    window[`p5_${sketch.id}`] = p5Instance;
+                                }
+                                
+                                console.log(`✅ P5 sketch "${sketch.id || 'unnamed'}" 初始化成功`);
+                            } else {
+                                console.error(`❌ P5 sketch "${sketch.id || 'unnamed'}" 函数未找到`);
+                            }
+                        } catch (error) {
+                            console.error(`❌ P5 sketch "${sketch.id || 'unnamed'}" 初始化失败:`, error);
+                        }
+                    });
+                }, 100);
+            }
+        }
+        
+        // 页面加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

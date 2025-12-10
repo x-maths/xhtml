@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模板测试</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background: #0a0e27;
+            color: #e0e7ff;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .teacher-msg {
+            background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(168,85,247,0.1));
+            border-left: 2px solid #a855f7;
+            padding: 16px;
+            margin: 10px 0;
+            border-radius: 12px;
+        }
+        .student-msg {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,255,0.1));
+            border-right: 2px solid #00ffff;
+            padding: 16px;
+            margin: 10px 0 10px 32px;
+            border-radius: 12px;
+        }
+        .speaker {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .teacher-msg .speaker {
+            color: #a855f7;
+        }
+        .student-msg .speaker {
+            color: #00ffff;
+        }
+        h1 {
+            text-align: center;
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <h1>对话框渲染测试</h1>
+    <div id="content"></div>
+
+    <script>
+        // 测试配置
+        const testDialogues = [
+            {
+                "type": "dialogue",
+                "speaker": "teacher",
+                "content": "同学们，大家有没有遇到过这样的情况：分蛋糕、分糖果的时候，刚好分完的情况不多，是不是经常会剩下一点点呢？"
+            },
+            {
+                "type": "dialogue",
+                "speaker": "student",
+                "content": "有有有！我分饼干的时候就常常剩下几块！"
+            },
+            {
+                "type": "dialogue",
+                "speaker": "teacher",
+                "content": "哈哈，对啦！今天我们要认识的就是这个\"剩下一点点\"的小伙伴，它在数学里有个好听的名字，叫做\"余数\"。"
+            }
+        ];
+
+        // 渲染对话框函数（修复后的版本）
+        function renderDialogue(dialogue) {
+            const speaker = dialogue.speaker || 'teacher';
+            const className = speaker === 'teacher' ? 'teacher-msg' : 'student-msg';
+            const color = speaker === 'teacher' ? '#a855f7' : '#00ffff';
+            const speakerLabel = speaker === 'teacher' ? '老师' : '学生';
+            
+            return `
+                <div class="${className}">
+                    <div class="speaker" style="color: ${color}">${speakerLabel}</div>
+                    <p>${dialogue.content}</p>
+                </div>
+            `;
+        }
+
+        // 渲染所有对话
+        const contentDiv = document.getElementById('content');
+        testDialogues.forEach(dialogue => {
+            contentDiv.innerHTML += renderDialogue(dialogue);
+        });
+    </script>
+</body>
+</html>

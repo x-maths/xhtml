@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">数学冒险</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.1.1/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', 'PingFang SC', sans-serif;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        /* 明暗主题变量 */
+        .light-theme {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a5568;
+            --accent-1: #00d4ff;
+            --accent-2: #7c3aed;
+            --accent-3: #f59e0b;
+            --border-glow: rgba(0, 212, 255, 0.15);
+            --border-line: rgba(0, 212, 255, 0.2);
+            --card-shadow: rgba(0, 0, 0, 0.05);
+        }
+        
+        .dark-theme {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #161b33;
+            --text-primary: #e0e7ff;
+            --text-secondary: #a5b4fc;
+            --accent-1: #00ffff;
+            --accent-2: #a855f7;
+            --accent-3: #fbbf24;
+            --border-glow: rgba(0, 255, 255, 0.2);
+            --border-line: rgba(0, 255, 255, 0.3);
+            --card-shadow: rgba(0, 255, 255, 0.1);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .cyber-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-line);
+            box-shadow: 0 0 20px var(--card-shadow), inset 0 0 20px rgba(124, 58, 237, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, var(--accent-1), var(--accent-2), var(--accent-1));
+            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.15;
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.3; }
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px var(--border-glow);
+        }
+        
+        .game-btn {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));
+            border: 1px solid var(--border-line);
+            color: var(--text-primary);
+            box-shadow: 0 0 10px var(--border-glow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-btn:hover::before {
+            left: 100%;
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(124, 58, 237, 0.2));
+            box-shadow: 0 0 15px var(--border-glow);
+            border-color: var(--accent-1);
+        }
+        
+        .game-btn:active {
+            transform: translateY(0);
+        }
+
+        .game-btn.correct {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .game-btn.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .hologram {
+            background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(124,58,237,0.05));
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-line);
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-line), transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.5;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .star-field {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        .dialogue-box {
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .teacher-msg {
+            background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(168,85,247,0.1));
+            border-left: 2px solid var(--accent-2);
+        }
+        
+        .student-msg {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,255,0.1));
+            border-right: 2px solid var(--accent-1);
+        }
+        
+        .hp-bar {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-line);
+            overflow: hidden;
+        }
+        
+        .hp-fill {
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--accent-1);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-forward;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .rotating {
+            animation: rotate 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <script>
+        // 根据URL参数加载主题
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const theme = urlParams.get('theme');
+            
+            if (theme === 'light') {
+                document.body.classList.remove('dark-theme');
+                document.body.classList.add('light-theme');
+            } else if (theme === 'dark') {
+                document.body.classList.remove('light-theme');
+                document.body.classList.add('dark-theme');
+            }
+        })();
+    </script>
+    <div id="star-field" class="star-field"></div>
+    
+    <!-- 游戏界面顶部 -->
+    <div class="sticky top-0 z-50 cyber-card rounded-b-3xl" style="position: sticky; top: 0;">
+        <div class="p-4">
+            <!-- 游戏标题 -->
+            <h1 id="main-title" class="text-2xl font-black text-center neon-text mb-2">
+                数学冒险
+            </h1>
+            <p id="mission-subtitle" class="text-base text-center" style="color: var(--text-secondary)">
+                [ MISSION: 探索数学的奥秘 ]
+            </p>
+            
+            <!-- 能量条 -->
+            <div class="mt-4">
+                <div class="flex justify-between text-sm mb-1" style="color: var(--text-secondary)">
+                    <span id="energy-label">知识能量</span>
+                    <span id="energy-text">0 / 100</span>
+                </div>
+                <div class="hp-bar rounded-full h-4">
+                    <div id="energy-bar" class="hp-fill rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- 音频播放器（隐藏） -->
+            <audio id="bg-audio" style="display: none;">
+                <source id="audio-source" src="" type="audio/wav">
+            </audio>
+        </div>
+    </div>
+
+    <!-- 音频控制按钮（右下角） -->
+    <div id="audio-control" onclick="toggleAudio()" style="position: fixed; bottom: 80px; right: 20px; z-index: 40; cursor: pointer; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px var(--border-glow); transition: all 0.3s ease;">
+        <span style="font-size: 28px;">🎵</span>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="max-w-md mx-auto px-4 py-6 space-y-6 pb-24">
+        <!-- 任务简报 -->
+        <div class="cyber-card rounded-2xl p-5 relative">
+            <div class="scan-line"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full" style="background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); display: flex; align-items: center; justify-content: center;">
+                    <span id="mission-icon" class="text-xl">📡</span>
+                </div>
+                <h2 class="text-xl font-bold">任务简报</h2>
+            </div>
+            <div id="mission-brief" class="space-y-2 text-base" style="color: var(--text-secondary)">
+                <!-- 动态加载任务简报 -->
+            </div>
+        </div>
+
+        <!-- 剧情流容器 -->
+        <div id="content-container" class="space-y-6">
+            <!-- 动态加载内容 -->
+        </div>
+
+        <!-- 任务总结 -->
+        <div class="cyber-card rounded-2xl p-5">
+            <h2 class="text-xl font-bold text-center mb-4" style="color: var(--accent-1)">
+                📊 <span id="summary-title">任务情报汇总</span>
+            </h2>
+            <div id="summary-container" class="space-y-3">
+                <!-- 动态加载总结 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 配置数据结构 ====================
+        const CONFIG = {
+            title: "数学冒险",
+            subtitle: "[ MISSION: 探索数学的奥秘 ]",
+            missionIcon: "📡",
+            energyLabel: "知识能量",
+            audioUrl: "",
+            missionBrief: [],
+            stages: [],
+            summary: []
+        };
+
+        // ==================== 游戏状态 ====================
+        let energy = 0;
+        const totalEnergy = 100;
+
+        // ==================== 核心功能函数 ====================
+        
+        // 音频控制
+        function toggleAudio() {
+            const audio = document.getElementById('bg-audio');
+            const control = document.getElementById('audio-control');
+            
+            if (audio.paused) {
+                audio.play();
+                control.classList.add('rotating');
+            } else {
+                audio.pause();
+                control.classList.remove('rotating');
+            }
+        }
+
+        // 更新能量条
+        function updateEnergy(amount) {
+            energy = Math.min(energy + amount, totalEnergy);
+            document.getElementById('energy-bar').style.width = `${energy}%`;
+            document.getElementById('energy-text').innerText = `${energy} / 100`;
+        }
+
+        // 检查答案
+        function checkAnswer(levelId, answer, correctAnswer, feedbackId, optionsId) {
+            const feedback = document.getElementById(feedbackId);
+            const btns = document.querySelectorAll(`#${optionsId} button`);
+            
+            if (answer === correctAnswer) {
+                feedback.classList.remove('hidden');
+                updateEnergy(CONFIG.stages.find(s => s.levels?.find(l => l.id === levelId))?.levels.find(l => l.id === levelId)?.exp || 25);
+                btns.forEach(btn => {
+                    const btnValue = btn.getAttribute('data-value');
+                    if (btnValue == correctAnswer) btn.classList.add('correct');
+                    else btn.classList.add('opacity-50');
+                    btn.disabled = true;
+                });
+            } else {
+                btns.forEach(btn => {
+                    const btnValue = btn.getAttribute('data-value');
+                    if (btnValue == answer) {
+                        btn.classList.add('wrong');
+                        setTimeout(() => btn.classList.remove('wrong'), 500);
+                    }
+                });
+            }
+        }
+
+        // 检查Boss关卡
+        function checkBoss(answer, correctAnswer, feedbackId, interactionId) {
+            const feedback = document.getElementById(feedbackId);
+            const interaction = document.getElementById(interactionId);
+            const btns = document.querySelectorAll(`#${interactionId} button`);
+
+            if (answer === correctAnswer) {
+                updateEnergy(25);
+                btns.forEach(btn => {
+                    const btnValue = btn.getAttribute('data-value');
+                    if (btnValue == correctAnswer) btn.classList.add('correct');
+                    else btn.classList.add('opacity-50');
+                    btn.disabled = true;
+                });
+                
+                setTimeout(() => {
+                    interaction.classList.add('hidden');
+                    feedback.classList.remove('hidden');
+                    createFireworks();
+                }, 500);
+            } else {
+                btns.forEach(btn => {
+                    const btnValue = btn.getAttribute('data-value');
+                    if (btnValue == answer) {
+                        btn.classList.add('wrong');
+                        setTimeout(() => btn.classList.remove('wrong'), 500);
+                    }
+                });
+            }
+        }
+
+        // 烟花效果
+        function createFireworks() {
+            const colors = ['#00d4ff', '#7c3aed', '#f59e0b', '#ef4444'];
+            for(let i=0; i<50; i++) {
+                const div = document.createElement('div');
+                div.style.position = 'fixed';
+                div.style.left = '50%';
+                div.style.top = '50%';
+                div.style.width = '10px';
+                div.style.height = '10px';
+                div.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                div.style.borderRadius = '50%';
+                div.style.transition = 'all 1s ease-out';
+                div.style.zIndex = '100';
+                document.body.appendChild(div);
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 200 + 50;
+                
+                setTimeout(() => {
+                    div.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`;
+                    div.style.opacity = '0';
+                }, 10);
+
+                setTimeout(() => div.remove(), 1000);
+            }
+        }
+
+        // ==================== 内容渲染函数 ====================
+        
+        // 渲染对话框
+        function renderDialogue(dialogue) {
+            const speaker = dialogue.speaker || 'teacher';
+            const className = speaker === 'teacher' ? 'teacher-msg' : 'student-msg ml-8';
+            const color = speaker === 'teacher' ? 'var(--accent-2)' : 'var(--accent-1)';
+            const speakerLabel = speaker === 'teacher' ? '老师' : '学生';
+            
+            return `
+                <div class="dialogue-box ${className} rounded-xl p-4">
+                    <div class="text-sm mb-2 font-bold" style="color: ${color}">${speakerLabel}</div>
+                    <p class="text-base leading-relaxed">${dialogue.content}</p>
+                </div>
+            `;
+        }
+
+        // 渲染可视化演示
+        function renderVisualization(viz) {
+            return `
+                <div class="cyber-card rounded-2xl p-4 my-4">
+                    <div class="text-center mb-3">
+                        <span class="text-md font-bold" style="color: var(--accent-1)">📊 ${viz.title}</span>
+                    </div>
+                    <div id="${viz.containerId}" class="rounded-lg overflow-hidden" style="background: rgba(0,0,0,0.2); max-width: 100%; margin: 0 auto;"></div>
+                    ${viz.caption ? `<div class="text-center mt-3 text-base" style="color: var(--text-secondary)">${viz.caption}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // 渲染p5.js动画
+        function renderP5(p5Config) {
+            // 注册p5配置到全局映射，用于后续初始化
+            if (!window.p5ConfigMap) {
+                window.p5ConfigMap = new Map();
+            }
+            window.p5ConfigMap.set(p5Config.containerId, p5Config);
+            
+            return `
+                <div class="cyber-card rounded-2xl p-4 my-4">
+                    <div class="text-center mb-3">
+                        <span class="text-md font-bold" style="color: var(--accent-1)">📊 ${p5Config.title}</span>
+                    </div>
+                    <div id="${p5Config.containerId}" class="rounded-lg overflow-hidden" style="background: rgba(0,0,0,0.2); max-width: 100%; margin: 0 auto; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <div class="text-sm" style="color: var(--text-secondary)">⏳ 加载动画中...</div>
+                    </div>
+                    ${p5Config.caption ? `<div class="text-center mt-3 text-base" style="color: var(--text-secondary)">${p5Config.caption}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // 渲染关卡
+        function renderLevel(level) {
+            const optionsHtml = level.options.map(opt => 
+                `<button onclick="checkAnswer('${level.id}', ${typeof opt.value === 'string' ? `'${opt.value}'` : opt.value}, ${typeof level.correctAnswer === 'string' ? `'${level.correctAnswer}'` : level.correctAnswer}, 'feedback-${level.id}', 'options-${level.id}')" 
+                         class="game-btn py-3 rounded-lg font-bold ${level.buttonSize || 'text-lg'}" 
+                         data-value="${opt.value}">${opt.label}</button>`
+            ).join('');
+            
+            return `
+                <div class="cyber-card rounded-2xl p-4 mt-6 border border-dashed border-opacity-50" style="border-color: var(--accent-3);">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-base font-bold text-yellow-400">${level.title}</span>
+                        <span class="text-sm px-2 py-1 rounded bg-yellow-400/20 text-yellow-400">+${level.exp} EXP</span>
+                    </div>
+                    <div class="text-base mb-4 text-center">
+                        <p class="mb-2">${level.question}</p>
+                        ${level.hint ? `<p class="text-sm text-gray-400">${level.hint}</p>` : ''}
+                    </div>
+                    <div id="options-${level.id}" class="grid grid-cols-${level.gridCols || 2} gap-2">
+                        ${optionsHtml}
+                    </div>
+                    <div id="feedback-${level.id}" class="hidden mt-3 text-center text-sm font-bold text-green-400">
+                        ✅ ${level.feedback}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 渲染Boss战
+        function renderBoss(boss) {
+            const optionsHtml = boss.options.map(opt => 
+                `<button onclick="checkBoss(${typeof opt.value === 'string' ? `'${opt.value}'` : opt.value}, ${typeof boss.correctAnswer === 'string' ? `'${boss.correctAnswer}'` : boss.correctAnswer}, 'feedback-boss', 'boss-interaction')" 
+                         class="game-btn py-3 rounded-lg font-bold text-base text-red-300 border-red-500/30 hover:border-red-500" 
+                         data-value="${opt.value}">${opt.label}</button>`
+            ).join('');
+            
+            return `
+                <div class="cyber-card rounded-2xl p-5 border-red-500/50 mt-6">
+                    <div class="flex justify-center mb-4">
+                        <span class="px-4 py-2 rounded-full text-sm font-bold bg-red-600 text-white shadow-lg shadow-red-500/50">⚔️ BOSS FIGHT</span>
+                    </div>
+                    
+                    <div class="text-center space-y-4">
+                        <div class="hologram p-4 rounded-xl">
+                            <h3 class="text-red-400 font-bold mb-2 text-lg">${boss.title}</h3>
+                            <p class="text-base mb-1">${boss.description}</p>
+                            ${boss.hint ? `<p class="text-sm text-gray-400">${boss.hint}</p>` : ''}
+                        </div>
+
+                        <div id="boss-interaction">
+                            <div class="grid grid-cols-2 gap-3">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                        <div id="feedback-boss" class="hidden mt-3 text-center font-bold text-green-400 space-y-2">
+                            <p class="text-xl">🎉 ${boss.successMessage}</p>
+                            ${boss.successDetail ? `<p class="text-sm text-gray-300">${boss.successDetail}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 渲染阶段
+        function renderStage(stage) {
+            let html = '<div class="space-y-4 fade-in">';
+            
+            stage.content.forEach(item => {
+                if (item.type === 'dialogue') {
+                    html += renderDialogue(item);
+                } else if (item.type === 'visualization') {
+                    html += renderVisualization(item);
+                } else if (item.type === 'p5') {
+                    html += renderP5(item);
+                } else if (item.type === 'level') {
+                    html += renderLevel(item);
+                } else if (item.type === 'boss') {
+                    html += renderBoss(item);
+                }
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        // ==================== 初始化页面 ====================
+        function initializePage(config) {
+            // 更新标题和基本信息
+            document.getElementById('page-title').textContent = config.title;
+            document.getElementById('main-title').textContent = config.title;
+            document.getElementById('mission-subtitle').textContent = config.subtitle;
+            document.getElementById('mission-icon').textContent = config.missionIcon;
+            document.getElementById('energy-label').textContent = config.energyLabel;
+            
+            // 设置音频
+            if (config.audioUrl) {
+                document.getElementById('audio-source').src = config.audioUrl;
+                document.getElementById('bg-audio').load();
+            }
+            
+            // 渲染任务简报
+            const missionBrief = document.getElementById('mission-brief');
+            missionBrief.innerHTML = config.missionBrief.map(text => `<p>${text}</p>`).join('');
+            
+            // 渲染内容
+            const contentContainer = document.getElementById('content-container');
+            contentContainer.innerHTML = config.stages.map(stage => renderStage(stage)).join('');
+            
+            // 渲染总结
+            const summaryContainer = document.getElementById('summary-container');
+            if (config.summaryTitle) {
+                document.getElementById('summary-title').textContent = config.summaryTitle;
+            }
+            summaryContainer.innerHTML = config.summary.map(item => `
+                <div class="hologram rounded-lg p-3">
+                    <div class="text-base font-bold mb-2" style="color: var(--accent-1)">${item.title}</div>
+                    <p class="text-sm" style="color: var(--text-secondary)">${item.content}</p>
+                </div>
+            `).join('');
+            
+            // 执行可视化初始化函数（如果有）
+            if (config.visualizations) {
+                config.visualizations.forEach(viz => {
+                    if (typeof viz.initFunction === 'function') {
+                        viz.initFunction();
+                    }
+                });
+            }
+            
+            // 初始化p5.js动画
+            if (config.p5Sketches) {
+                initializeP5Sketches(config.p5Sketches);
+            }
+        }
+
+        // ==================== P5.js 动画初始化系统 ====================
+        
+        /**
+         * 初始化所有p5.js动画
+         * @param {Array} sketches - sketch配置数组
+         */
+        async function initializeP5Sketches(sketches) {
+            // 延迟初始化，确保DOM已渲染
+            setTimeout(async () => {
+                for (const sketch of sketches) {
+                    try {
+                        await initializeSingleP5Sketch(sketch);
+                    } catch (error) {
+                        console.error(`❌ P5 sketch "${sketch.id || 'unnamed'}" 初始化失败:`, error);
+                    }
+                }
+            }, 100);
+        }
+        
+        /**
+         * 初始化单个p5.js sketch
+         * @param {Object} sketch - sketch配置对象
+         */
+        async function initializeSingleP5Sketch(sketch) {
+            let sketchFunc = null;
+            
+            // 方法1: 从配置中的code字段创建函数
+            if (sketch.code) {
+                console.log(`📝 从配置代码创建 sketch "${sketch.id}"`);
+                sketchFunc = createSketchFromCode(sketch.code, sketch.id);
+            }
+            
+            // 方法2: 从外部URL加载代码
+            else if (sketch.codeUrl) {
+                console.log(`🌐 从URL加载 sketch "${sketch.id}": ${sketch.codeUrl}`);
+                const code = await fetchSketchCode(sketch.codeUrl);
+                sketchFunc = createSketchFromCode(code, sketch.id);
+            }
+            
+            // 方法3: 从全局作用域获取已定义的函数
+            else if (sketch.sketchFunction) {
+                if (typeof sketch.sketchFunction === 'function') {
+                    sketchFunc = sketch.sketchFunction;
+                } else if (typeof sketch.sketchFunction === 'string') {
+                    sketchFunc = window[sketch.sketchFunction];
+                }
+            }
+            
+            // 方法4: 通过sketch.id从全局作用域获取
+            else if (sketch.id && window[sketch.id]) {
+                sketchFunc = window[sketch.id];
+            }
+            
+            // 执行初始化
+            if (typeof sketchFunc === 'function') {
+                // 查找对应的容器ID
+                const containerId = sketch.containerId || findContainerIdForSketch(sketch.id);
+                
+                if (containerId && document.getElementById(containerId)) {
+                    // 创建p5实例，传入容器ID
+                    const p5Instance = new p5((p) => {
+                        // 调用sketch函数，传入p5实例和配置参数
+                        sketchFunc(p, containerId, sketch.params || {});
+                    });
+                    
+                    // 存储实例引用
+                    if (sketch.id) {
+                        window[`p5_${sketch.id}`] = p5Instance;
+                    }
+                    
+                    console.log(`✅ P5 sketch "${sketch.id || 'unnamed'}" 初始化成功`);
+                } else {
+                    console.error(`❌ 容器 "${containerId}" 未找到`);
+                }
+            } else {
+                console.error(`❌ P5 sketch "${sketch.id || 'unnamed'}" 函数未找到`);
+            }
+        }
+        
+        /**
+         * 从代码字符串创建sketch函数
+         * @param {string} code - JavaScript代码字符串
+         * @param {string} sketchId - sketch标识符
+         * @returns {Function} sketch函数
+         */
+        function createSketchFromCode(code, sketchId) {
+            try {
+                // 使用Function构造器创建函数
+                // 期望代码返回一个函数: (p, containerId, params) => { ... }
+                const func = new Function('return ' + code)();
+                
+                if (typeof func === 'function') {
+                    // 同时注册到全局作用域，方便调试
+                    window[sketchId] = func;
+                    return func;
+                } else {
+                    throw new Error('代码未返回函数');
+                }
+            } catch (error) {
+                console.error(`创建sketch函数失败 (${sketchId}):`, error);
+                throw error;
+            }
+        }
+        
+        /**
+         * 从URL获取sketch代码
+         * @param {string} url - 代码文件URL
+         * @returns {Promise<string>} 代码字符串
+         */
+        async function fetchSketchCode(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.text();
+            } catch (error) {
+                console.error(`获取sketch代码失败 (${url}):`, error);
+                throw error;
+            }
+        }
+        
+        /**
+         * 根据sketchId查找对应的containerId
+         * @param {string} sketchId - sketch标识符
+         * @returns {string|null} 容器ID
+         */
+        function findContainerIdForSketch(sketchId) {
+            if (!window.p5ConfigMap) return null;
+            
+            for (const [containerId, config] of window.p5ConfigMap.entries()) {
+                if (config.sketchId === sketchId) {
+                    return containerId;
+                }
+            }
+            return null;
+        }
+
+        // ==================== P5.js 星空背景 ====================
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('star-field');
+            noStroke();
+        }
+
+        let stars = [];
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+
+        function draw() {
+            clear();
+            fill(255);
+            for (let star of stars) {
+                ellipse(star.x, star.y, star.size);
+                star.y += star.speed;
+                if (star.y > height) star.y = 0;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // ==================== 加载外部配置 ====================
+        // 从URL参数或外部文件加载配置
+        async function loadConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const configUrl = urlParams.get('config');
+            
+            if (configUrl) {
+                try {
+                    const response = await fetch(configUrl);
+                    const externalConfig = await response.json();
+                    Object.assign(CONFIG, externalConfig);
+                } catch (error) {
+                    console.error('加载配置失败:', error);
+                }
+            }
+            
+            // 初始化页面
+            initializePage(CONFIG);
+        }
+
+        // 页面加载完成后执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadConfig);
+        } else {
+            loadConfig();
+        }
+    </script>
+</body>
+</html>

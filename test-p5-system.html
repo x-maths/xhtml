@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js 动画系统测试</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #7c3aed;
+            margin-top: 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2196f3;
+            margin: 10px 0;
+        }
+        .code {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 P5.js 动画系统测试页面</h1>
+    
+    <div class="card">
+        <h2>📖 使用说明</h2>
+        <p>本页面用于测试 p5.js 动画渲染系统的三种配置方式:</p>
+        <ol>
+            <li><strong>内联代码</strong>: 代码直接嵌入配置文件</li>
+            <li><strong>外部 URL</strong>: 从外部 JavaScript 文件加载代码</li>
+            <li><strong>全局函数</strong>: 使用页面中已定义的函数</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>🚀 快速测试</h2>
+        <div class="button-group">
+            <button onclick="loadConfig('config-with-p5-enhanced.json')">
+                测试内联代码配置
+            </button>
+            <button onclick="loadConfig('config-external-sketch.json')">
+                测试外部 URL 配置
+            </button>
+            <button onclick="window.location.href='template.html?config=config-with-p5.json'">
+                打开原始配置
+            </button>
+        </div>
+        
+        <div class="info" style="margin-top: 15px;">
+            <strong>💡 提示:</strong> 点击按钮将在新标签页中打开对应的配置页面
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📝 配置文件说明</h2>
+        
+        <h3>1. config-with-p5-enhanced.json (内联代码)</h3>
+        <p>动画代码直接嵌入在配置文件的 <code>code</code> 字段中</p>
+        <div class="code">
+{
+  "p5Sketches": [
+    {
+      "id": "remainderSketch",
+      "code": "(function(p, containerId, params) { ... })",
+      "params": { "totalApples": 10, "totalKids": 3 }
+    }
+  ]
+}
+        </div>
+
+        <h3>2. config-external-sketch.json (外部 URL)</h3>
+        <p>从外部文件加载动画代码</p>
+        <div class="code">
+{
+  "p5Sketches": [
+    {
+      "id": "remainderSketch",
+      "codeUrl": "./sketches/remainder-sketch.js",
+      "params": { "totalApples": 10, "totalKids": 3 }
+    }
+  ]
+}
+        </div>
+
+        <h3>3. 全局函数方式 (本页面演示)</h3>
+        <p>在 HTML 页面中定义函数,配置中引用函数名</p>
+        <div class="code">
+// HTML 中定义
+&lt;script&gt;
+  function mySketch(p, containerId, params) {
+    p.setup = function() { ... };
+    p.draw = function() { ... };
+  }
+&lt;/script&gt;
+
+// 配置中引用
+{
+  "p5Sketches": [
+    {
+      "id": "mySketch",
+      "sketchFunction": "mySketch"
+    }
+  ]
+}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 开发工具</h2>
+        <div class="button-group">
+            <button onclick="window.open('README-p5-system.md')">
+                📚 完整文档
+            </button>
+            <button onclick="window.open('P5-QUICK-REFERENCE.md')">
+                ⚡ 快速参考
+            </button>
+            <button onclick="window.open('sketches/remainder-sketch.js')">
+                📄 示例代码
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎯 创建自己的动画</h2>
+        <ol>
+            <li>复制 <code>config-with-p5-enhanced.json</code> 创建新配置文件</li>
+            <li>在 <code>stages[].content[]</code> 中添加 p5 类型内容项</li>
+            <li>在 <code>p5Sketches[]</code> 中定义动画代码</li>
+            <li>选择代码加载方式 (内联/URL/全局)</li>
+            <li>访问: <code>template.html?config=你的配置.json</code></li>
+        </ol>
+        
+        <div class="info">
+            <strong>📖 参考文档:</strong>
+            <ul style="margin: 10px 0 0 0;">
+                <li><code>README-p5-system.md</code> - 完整系统文档</li>
+                <li><code>P5-QUICK-REFERENCE.md</code> - 快速参考指南</li>
+                <li><code>sketches/remainder-sketch.js</code> - 动画代码示例</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🐛 调试技巧</h2>
+        <ul>
+            <li>打开浏览器控制台查看初始化日志</li>
+            <li>检查 <code>window.p5ConfigMap</code> 查看配置映射</li>
+            <li>访问 <code>window.p5_[sketchId]</code> 获取 p5 实例</li>
+            <li>确认 <code>containerId</code> 和 <code>sketchId</code> 匹配</li>
+            <li>验证 sketch 代码格式: <code>(function(p, containerId, params) { ... })</code></li>
+        </ul>
+    </div>
+
+    <script>
+        function loadConfig(configFile) {
+            window.open(`template.html?config=${configFile}`, '_blank');
+        }
+
+        // 显示当前环境信息
+        console.log('📍 当前路径:', window.location.href);
+        console.log('📁 可用配置文件:');
+        console.log('  - config-with-p5.json (原始配置)');
+        console.log('  - config-with-p5-enhanced.json (内联代码)');
+        console.log('  - config-external-sketch.json (外部 URL)');
+        console.log('📚 文档文件:');
+        console.log('  - README-p5-system.md (完整文档)');
+        console.log('  - P5-QUICK-REFERENCE.md (快速参考)');
+        console.log('📄 示例代码:');
+        console.log('  - sketches/remainder-sketch.js');
+    </script>
+</body>
+</html>
